@@ -3,13 +3,14 @@ map <F7> :tabp<CR>
 map <F8> :tabn<CR>
 set mouse=a
 set number
+map <F12> :NeoCompleteToggle<CR>
 
-let g:neocomplete#disable_auto_complete = 0
+let g:neocomplete#disable_auto_complete = 1
 
  " Disable AutoComplPop.
  let g:acp_enableAtStartup = 0
  " Use neocomplete.
- let g:neocomplete#enable_at_startup = 1
+ let g:neocomplete#enable_at_startup = 0
  " Use smartcase.
  let g:neocomplete#enable_smart_case = 1
  " Set minimum syntax keyword length.
@@ -21,9 +22,9 @@ let g:neocomplete#disable_auto_complete = 0
 
  " Recommended key-mappings.
  " <CR>: close popup and save indent.
- inoremap <silent> <CR> <C-r>=<SID>my_cr_function()<CR>
+ "inoremap <silent> <CR> <C-r>=<SID>my_cr_function()<CR>
  function! s:my_cr_function()
-     return neocomplete#close_popup() . "\<CR>"
+     return neocomplete#close_popup(). "\<CR>"
  endfunction
  " ESC close pupup
  
@@ -46,6 +47,9 @@ let g:neocomplete#disable_auto_complete = 0
  au FileType go nmap <Leader>b <Plug>(go-build)
  au FileType go nmap <Leader>t <Plug>(go-test)
  au FileType go nmap gd <Plug>(go-def-tab)
+ au FileType go let g:neocomplete#disable_auto_complete = 0
+ au FileType go :NeoCompleteEnable
+
 
 " Netrw Style Listing
  let g:netrw_liststyle = 3
@@ -53,6 +57,8 @@ let g:neocomplete#disable_auto_complete = 0
  let g:tagbar_width = 30
  let g:neocomplete#enable_auto_close_preview = 0
  nnoremap <Leader><Leader> :TagbarOpen<CR><C-W>h<C-W>s:e .<CR><C-W>l:let g:netrw_chgwin=winnr()<CR><C-W>h
+
+
 
  let g:tagbar_type_go = {
     \ 'ctagstype' : 'go',
