@@ -17,6 +17,7 @@ open_file_under_cursor.vim https://github.com/amix/open_file_under_cursor.vim
 snipmate-snippets https://github.com/scrooloose/snipmate-snippets
 taglist.vim https://github.com/vim-scripts/taglist.vim
 tlib https://github.com/vim-scripts/tlib
+tagbar https://github.com/majutsushi/tagbar
 vim-addon-mw-utils https://github.com/MarcWeber/vim-addon-mw-utils
 vim-bundle-mako https://github.com/sophacles/vim-bundle-mako
 vim-coffee-script https://github.com/kchmck/vim-coffee-script
