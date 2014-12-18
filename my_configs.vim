@@ -49,7 +49,7 @@ let g:neocomplete#disable_auto_complete = 1
  au FileType go nmap gd <Plug>(go-def-tab)
  au FileType go let g:neocomplete#disable_auto_complete = 0
  au FileType go :NeoCompleteEnable
-
+ "let g:neocomplete#sources#omni#input_patterns.go = '[^.[:digit:] *\t]\.\w*'
 
 " Netrw Style Listing
  let g:netrw_liststyle = 3
