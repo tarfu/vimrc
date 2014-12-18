@@ -1,6 +1,7 @@
 map <F6> :set invpaste<CR><Bar>:echo "Paste Mode: " . strpart("OffOn", 3 * &paste, 3)<CR>
 map <F7> :tabp<CR>
 map <F8> :tabn<CR>
+map <F9> :tabc<CR>
 set mouse=a
 set number
 map <F12> :NeoCompleteToggle<CR>
