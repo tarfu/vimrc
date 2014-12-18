@@ -63,6 +63,8 @@ endtry
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 set autowrite
 set autowriteall
+au TabLeave * wall
+au FocusLost * wall
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Command mode related
