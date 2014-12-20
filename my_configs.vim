@@ -42,12 +42,17 @@ let g:neocomplete#disable_auto_complete = 1
  "set completeopt = menu,menuone,preview
 
  " Go related mappings
+ au FileType go nmap <Leader>s <Plug>(go-implements)
  au FileType go nmap <Leader>i <Plug>(go-info)
  au FileType go nmap <Leader>gd <Plug>(go-doc)
+ au FileType go nmap <Leader>gv <Plug>(go-doc-vertical)
+ au FileType go nmap <Leader>gb <Plug>(go-doc-browser)
+ au FileType go nmap <Leader>e <Plug>(go-rename)
  au FileType go nmap <Leader>r <Plug>(go-run)
  au FileType go nmap <Leader>b <Plug>(go-build)
  au FileType go nmap <Leader>t <Plug>(go-test)
  au FileType go nmap gd <Plug>(go-def-tab)
+ let g:go_fmt_command = "goimports"
  au FileType go let g:neocomplete#disable_auto_complete = 0
  au FileType go :NeoCompleteEnable
  "let g:neocomplete#sources#omni#input_patterns.go = '[^.[:digit:] *\t]\.\w*'
