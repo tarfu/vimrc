@@ -1,4 +1,4 @@
-" Copyright (c) 2013 Junegunn Choi
+" Copyright (c) 2014 Junegunn Choi
 "
 " MIT License
 "
@@ -33,13 +33,12 @@ function! s:set_color(group, attr, color)
   execute printf("hi %s %s%s=%s", a:group, gui ? 'gui' : 'cterm', a:attr, a:color)
 endfunction
 
-function! s:blank()
-  let main = bufwinnr(t:goyo_master)
-  if main != -1
-    execute main . 'wincmd w'
-  else
+function! s:blank(repel)
+  if bufwinnr(t:goyo_pads.r) <= bufwinnr(t:goyo_pads.l) + 1
+    \ || bufwinnr(t:goyo_pads.b) <= bufwinnr(t:goyo_pads.t) + 3
     call s:goyo_off()
   endif
+  execute 'wincmd' a:repel
 endfunction
 
 function! s:init_pad(command)
@@ -59,12 +58,13 @@ function! s:init_pad(command)
   return bufnr
 endfunction
 
-function! s:setup_pad(bufnr, vert, size)
+function! s:setup_pad(bufnr, vert, size, repel)
   let win = bufwinnr(a:bufnr)
   execute win . 'wincmd w'
   execute (a:vert ? 'vertical ' : '') . 'resize ' . max([0, a:size])
   augroup goyop
-    autocmd WinEnter <buffer> call s:blank()
+    execute 'autocmd WinEnter,CursorMoved <buffer> nested call s:blank("'.a:repel.'")'
+    autocmd WinLeave <buffer> call s:hide_statusline()
   augroup END
 
   " To hide scrollbars of pad windows in GVim
@@ -85,17 +85,21 @@ function! s:hmargin()
 endfunction
 
 function! s:resize_pads()
+  let t:goyo_width         = max([2, t:goyo_width])
+  let t:goyo_margin_top    = min([max([2, t:goyo_margin_top]),    &lines / 2 - 1])
+  let t:goyo_margin_bottom = min([max([2, t:goyo_margin_bottom]), &lines / 2 - 1])
+
   let hmargin = s:hmargin()
-  let tmargin = get(g:, 'goyo_margin_top', 4)
-  let bmargin = get(g:, 'goyo_margin_bottom', 4)
 
   augroup goyop
     autocmd!
   augroup END
-  call s:setup_pad(t:goyo_pads.t, 0, tmargin - 1)
-  call s:setup_pad(t:goyo_pads.b, 0, bmargin - 2)
-  call s:setup_pad(t:goyo_pads.l, 1, hmargin / 2 - 1)
-  call s:setup_pad(t:goyo_pads.r, 1, hmargin / 2 - 1)
+  call s:setup_pad(t:goyo_pads.t, 0, t:goyo_margin_top - 1, 'j')
+  call s:setup_pad(t:goyo_pads.b, 0, t:goyo_margin_bottom - 2, 'k')
+  call s:setup_pad(t:goyo_pads.l, 1, hmargin / 2 - 1, 'l')
+  call s:setup_pad(t:goyo_pads.r, 1, hmargin / 2 - 1, 'h')
+
+  let t:goyo_width = winwidth(0)
 endfunction
 
 function! s:tranquilize()
@@ -114,6 +118,45 @@ function! s:tranquilize()
   endfor
 endfunction
 
+function! s:hide_statusline()
+  let &l:statusline = repeat(' ', winwidth(0))
+endfunction
+
+function! s:hide_linenr()
+  if !get(g:, 'goyo_linenr', 0)
+    setlocal nonu
+    if exists('&rnu')
+      setlocal nornu
+    endif
+  endif
+  if exists('&colorcolumn')
+    setlocal colorcolumn=
+  endif
+endfunction
+
+function! s:maps_nop()
+  let mapped = filter(['R', 'H', 'J', 'K', 'L', '|', '_', '='],
+                    \ "empty(maparg(\"\<c-w>\".v:val, 'n'))")
+  for c in mapped
+    execute 'nnoremap <c-w>'.escape(c, '|').' <nop>'
+  endfor
+  return mapped
+endfunction
+
+function! s:maps_resize()
+  let commands = {
+  \ '>': ':<c-u>let t:goyo_width = winwidth(0) + 2 * v:count1 <bar> call <sid>resize_pads()<cr>',
+  \ '<': ':<c-u>let t:goyo_width = winwidth(0) - 2 * v:count1 <bar> call <sid>resize_pads()<cr>',
+  \ '+': ':<c-u>let t:goyo_margin_top -= v:count1 <bar> let t:goyo_margin_bottom -= v:count1 <bar> call <sid>resize_pads()<cr>',
+  \ '-': ':<c-u>let t:goyo_margin_top += v:count1 <bar> let t:goyo_margin_bottom += v:count1 <bar> call <sid>resize_pads()<cr>'
+  \ }
+  let mapped = filter(keys(commands), "empty(maparg(\"\<c-w>\".v:val, 'n'))")
+  for c in mapped
+    execute 'nnoremap <silent> <c-w>'.c.' '.commands[c]
+  endfor
+  return mapped
+endfunction
+
 function! s:goyo_on(width)
   let s:orig_tab = tabpagenr()
 
@@ -122,19 +165,22 @@ function! s:goyo_on(width)
 
   let t:goyo_master = winbufnr(0)
   let t:goyo_width  = a:width
+  let t:goyo_margin_top = get(g:, 'goyo_margin_top', 4)
+  let t:goyo_margin_bottom = get(g:, 'goyo_margin_bottom', 4)
   let t:goyo_pads = {}
   let t:goyo_revert =
     \ { 'laststatus':     &laststatus,
     \   'showtabline':    &showtabline,
     \   'fillchars':      &fillchars,
+    \   'winminwidth':    &winminwidth,
     \   'winwidth':       &winwidth,
     \   'winminheight':   &winminheight,
     \   'winheight':      &winheight,
-    \   'statusline':     &statusline,
     \   'ruler':          &ruler,
     \   'sidescroll':     &sidescroll,
     \   'sidescrolloff':  &sidescrolloff
     \ }
+  let t:goyo_maps = extend(s:maps_nop(), s:maps_resize())
   if has('gui_running')
     let t:goyo_revert.guioptions = &guioptions
   endif
@@ -143,6 +189,12 @@ function! s:goyo_on(width)
   let t:goyo_disabled_gitgutter = get(g:, 'gitgutter_enabled', 0)
   if t:goyo_disabled_gitgutter
     silent! GitGutterDisable
+  endif
+
+  " vim-signify
+  let t:goyo_disabled_signify = exists('b:sy') && b:sy.active
+  if t:goyo_disabled_signify
+    SignifyToggle
   endif
 
   " vim-airline
@@ -166,21 +218,12 @@ function! s:goyo_on(width)
     silent! call lightline#disable()
   endif
 
-  if !get(g:, 'goyo_linenr', 0)
-    setlocal nonu
-    if exists('&rnu')
-      setlocal nornu
-    endif
-  endif
-  if exists('&colorcolumn')
-    setlocal colorcolumn=
-  endif
-
+  call s:hide_linenr()
   " Global options
-  set winwidth=1
   let &winheight = max([&winminheight, 1])
   set winminheight=1
   set winheight=1
+  set winminwidth=1 winwidth=1
   set laststatus=0
   set showtabline=0
   set noruler
@@ -204,19 +247,20 @@ function! s:goyo_on(width)
   call s:resize_pads()
   call s:tranquilize()
 
-  let &statusline = repeat(' ', winwidth(0))
-
   augroup goyo
     autocmd!
-    autocmd BufWinLeave <buffer> call s:goyo_off()
     autocmd TabLeave    *        call s:goyo_off()
     autocmd VimResized  *        call s:resize_pads()
     autocmd ColorScheme *        call s:tranquilize()
+    autocmd BufWinEnter *        call s:hide_linenr() | call s:hide_statusline()
+    autocmd WinEnter,WinLeave *  call s:hide_statusline()
   augroup END
 
+  call s:hide_statusline()
   if exists('g:goyo_callbacks[0]')
     call g:goyo_callbacks[0]()
   endif
+  silent! doautocmd User GoyoEnter
 endfunction
 
 function! s:goyo_off()
@@ -239,8 +283,13 @@ function! s:goyo_off()
   augroup END
   augroup! goyop
 
+  for c in t:goyo_maps
+    execute 'nunmap <c-w>'.escape(c, '|')
+  endfor
+
   let goyo_revert             = t:goyo_revert
   let goyo_disabled_gitgutter = t:goyo_disabled_gitgutter
+  let goyo_disabled_signify   = t:goyo_disabled_signify
   let goyo_disabled_airline   = t:goyo_disabled_airline
   let goyo_disabled_powerline = t:goyo_disabled_powerline
   let goyo_disabled_lightline = t:goyo_disabled_lightline
@@ -255,9 +304,14 @@ function! s:goyo_off()
   tabclose
   execute 'normal! '.s:orig_tab.'gt'
   if winbufnr(0) == goyo_orig_buffer
+    " Doesn't work if window closed with `q`
     execute printf('normal! %dG%d|', line, col)
   endif
 
+  let wmw = remove(goyo_revert, 'winminwidth')
+  let ww  = remove(goyo_revert, 'winwidth')
+  let &winwidth     = ww
+  let &winminwidth  = wmw
   let wmh = remove(goyo_revert, 'winminheight')
   let wh  = remove(goyo_revert, 'winheight')
   let &winheight    = max([wmh, 1])
@@ -271,6 +325,12 @@ function! s:goyo_off()
 
   if goyo_disabled_gitgutter
     silent! GitGutterEnable
+  endif
+
+  if goyo_disabled_signify
+    silent! if !b:sy.active
+      SignifyToggle
+    endif
   endif
 
   if goyo_disabled_airline && !exists("#airline")
@@ -294,22 +354,29 @@ function! s:goyo_off()
   if exists('g:goyo_callbacks[1]')
     call g:goyo_callbacks[1]()
   endif
+  silent! doautocmd User GoyoLeave
 endfunction
 
-function! s:goyo(...)
+function! s:goyo(bang, ...)
   let width = a:0 > 0 ? a:1 : get(g:, 'goyo_width', 80)
 
-  if exists('#goyo') == 0
-    call s:goyo_on(width)
-  elseif a:0 > 0
-    let t:goyo_width = width
-    call s:resize_pads()
+  if a:bang
+    if exists('#goyo')
+      call s:goyo_off()
+    endif
   else
-    call s:goyo_off()
+    if exists('#goyo') == 0
+      call s:goyo_on(width)
+    elseif a:0 > 0
+      let t:goyo_width = width
+      call s:resize_pads()
+    else
+      call s:goyo_off()
+    end
   end
 endfunction
 
-command! -nargs=? Goyo call s:goyo(<args>)
+command! -nargs=? -bar -bang Goyo call s:goyo('<bang>' == '!', <args>)
 
 let &cpo = s:cpo_save
 unlet s:cpo_save

@@ -40,6 +40,8 @@ snippet j.u
 ## Class
 snippet cl
 	class ${1:`vim_snippets#Filename("$1", "untitled")`} ${0}
+snippet pcl
+	public class ${1:`vim_snippets#Filename("$1", "untitled")`} ${0}
 snippet in
 	interface ${1:`vim_snippets#Filename("$1", "untitled")`} ${2:extends Parent}
 snippet tc
@@ -91,16 +93,28 @@ snippet v
 ##
 ## Declaration for ArrayList
 snippet d.al
-	List<${1:Object}> ${2:list} = ArrayList<$1>;${0}
+	List<${1:Object}> ${2:list} = new ArrayList<$1>();${0}
 ## Declaration for HashMap
 snippet d.hm
-	Map<${1:Object}, ${2:Object}> ${3:map} = HashMap<$1, $2>;${0}
+	Map<${1:Object}, ${2:Object}> ${3:map} = new HashMap<$1, $2>();${0}
 ## Declaration for HashSet
 snippet d.hs
-	Set<${1:Object}> ${2:set} = HashSet<$1>;${0}
+	Set<${1:Object}> ${2:set} = new HashSet<$1>();${0}
 ## Declaration for Stack
 snippet d.st
-	Stack<${1:Object}> ${2:stack} = Stack<$1>;${0}
+	Stack<${1:Object}> ${2:stack} = new Stack<$1>();${0}
+##
+## Singleton Pattern
+snippet singlet
+	private static class Holder {
+		private static final ${1:`vim_snippets#Filename("$1")`} INSTANCE = new $1();
+	}
+
+	private $1() { }
+
+	public static $1 getInstance() {
+		return Holder.INSTANCE;
+	}
 ##
 ## Enhancements to Methods, variables, classes, etc.
 snippet ab
@@ -123,6 +137,24 @@ snippet errln
 ## Exception Handling
 snippet as
 	assert ${1:test} : "${2:Failure message}";
+snippet ae
+	assertEquals("${1:Failure message}", ${2:expected}, ${3:actual});
+snippet aae
+	assertArrayEquals("${1:Failure message}", ${2:expecteds}, ${3:actuals});
+snippet af
+	assertFalse("${1:Failure message}", ${2:condition});
+snippet at
+	assertTrue("${1:Failure message}", ${2:condition});
+snippet an
+	assertNull("${1:Failure message}", ${2:object});
+snippet ann
+	assertNotNull("${1:Failure message}", ${2:object});
+snippet ass
+	assertSame("${1:Failure message}", ${2:expected}, ${3:actual});
+snippet asns
+	assertNotSame("${1:Failure message}", ${2:expected}, ${3:actual});
+snippet fa
+	fail("${1:Failure message}");
 snippet ca
 	catch(${1:Exception} ${2:e}) ${0}
 snippet thr
