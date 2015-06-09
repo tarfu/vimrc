@@ -36,6 +36,19 @@ function! neocomplete#mappings#define_default_mappings() "{{{
   inoremap <silent> <Plug>(neocomplete_start_auto_complete)
         \ <C-r>=neocomplete#mappings#auto_complete()<CR><C-r>=
         \neocomplete#mappings#popup_post()<CR>
+  inoremap <silent> <Plug>(neocomplete_start_manual_complete)
+        \ <C-r>=neocomplete#mappings#manual_complete()<CR><C-r>=
+        \neocomplete#mappings#popup_post()<CR>
+
+  if !has('patch-7.4.653')
+    " To prevent Vim's complete() bug.
+    if mapcheck('<C-h>', 'i') ==# ''
+      inoremap <expr><C-h> neocomplete#smart_close_popup()."\<C-h>"
+    endif
+    if mapcheck('<BS>', 'i') ==# ''
+      inoremap <expr><BS> neocomplete#smart_close_popup()."\<C-h>"
+    endif
+  endif
 endfunction"}}}
 
 function! neocomplete#mappings#auto_complete() "{{{
@@ -76,11 +89,6 @@ function! neocomplete#mappings#manual_complete() "{{{
 endfunction"}}}
 
 function! neocomplete#mappings#smart_close_popup() "{{{
-  " Don't skip next complete.
-  let neocomplete = neocomplete#get_current_neocomplete()
-  let neocomplete.skip_next_complete = 0
-  let neocomplete.old_linenr = 0
-
   return neocomplete#mappings#cancel_popup()
 endfunction
 "}}}
@@ -94,6 +102,7 @@ endfunction
 "}}}
 function! neocomplete#mappings#cancel_popup() "{{{
   let neocomplete = neocomplete#get_current_neocomplete()
+  let neocomplete.complete_str = ''
   let neocomplete.skip_next_complete = 1
 
   return pumvisible() ? "\<C-e>" : ''
@@ -198,7 +207,8 @@ function! neocomplete#mappings#start_manual_complete(...) "{{{
     return ''
   endif
 
-  if neocomplete#helper#is_omni(neocomplete#get_cur_text(1))
+  if neocomplete#helper#get_force_omni_complete_pos(
+        \ neocomplete#get_cur_text(1)) >= 0
     return "\<C-x>\<C-o>"
   endif
 
@@ -216,7 +226,8 @@ function! neocomplete#mappings#start_manual_complete(...) "{{{
   call neocomplete#helper#complete_configure()
 
   " Start complete.
-  return "\<C-r>=neocomplete#mappings#manual_complete()\<CR>"
+  return "\<C-r>=neocomplete#mappings#manual_complete()
+        \\<CR>\<C-r>=neocomplete#mappings#popup_post()\<CR>"
 endfunction"}}}
 
 let &cpo = s:save_cpo
