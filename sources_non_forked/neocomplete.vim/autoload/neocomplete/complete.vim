@@ -75,14 +75,14 @@ function! neocomplete#complete#_get_words(sources, complete_pos, complete_str) "
   " Append prefix.
   let candidates = []
   let len_words = 0
-  for source in sort(filter(copy(a:sources),
+  for source in sort(filter(deepcopy(a:sources),
         \ '!empty(v:val.neocomplete__context.candidates)'),
         \  's:compare_source_rank')
     let mark = source.mark
     let context = source.neocomplete__context
     let words =
           \ type(context.candidates[0]) == type('') ?
-          \ map(copy(context.candidates), "{'word': v:val, 'menu' : mark}") :
+          \ map(copy(context.candidates), "{'word': v:val}") :
           \ deepcopy(context.candidates)
     let context.candidates = words
 
@@ -125,11 +125,10 @@ EOF
     lua << EOF
     do
       local candidates = vim.eval('words')
-      local mark = vim.eval('mark')
+      local mark = vim.eval('mark') .. ' '
       for i = 0, #candidates-1 do
-        if candidates[i].menu == nil then
-          candidates[i].menu = mark
-        end
+        candidates[i].menu = mark .. (candidates[i].menu ~= nil and
+                             candidates[i].menu or '')
       end
     end
 EOF
@@ -149,6 +148,8 @@ EOF
       return []
     endif
   endfor
+
+  call filter(candidates, 'v:val.word !=# a:complete_str')
 
   if g:neocomplete#max_list > 0
     let candidates = candidates[: g:neocomplete#max_list]
@@ -283,8 +284,11 @@ function! neocomplete#complete#_set_results_words(sources) "{{{
       let context.prev_complete_pos = context.complete_pos
 
       if !empty(context.candidates)
+        let matchers = empty(source.neocomplete__matchers) ?
+              \   neocomplete#get_current_neocomplete().default_matchers
+              \ : source.neocomplete__matchers
         let context.candidates = neocomplete#helper#call_filters(
-              \ source.neocomplete__matchers, source, {})
+              \ matchers, source, {})
       endif
 
       call neocomplete#print_debug(source.name)
@@ -296,10 +300,9 @@ endfunction"}}}
 
 function! neocomplete#complete#_check_previous_position(cur_text, complete_pos) abort "{{{
   let neocomplete = neocomplete#get_current_neocomplete()
-  return neocomplete.skip_next_complete
-        \ && a:complete_pos == neocomplete.old_complete_pos
+  return a:complete_pos == neocomplete.old_complete_pos
         \ && line('.') == neocomplete.old_linenr
-        \ && stridx(a:cur_text, neocomplete.old_cur_text) == 0
+        \ && a:cur_text ==# neocomplete.old_cur_text
 endfunction"}}}
 function! neocomplete#complete#_set_previous_position(cur_text, complete_pos) abort "{{{
   let neocomplete = neocomplete#get_current_neocomplete()

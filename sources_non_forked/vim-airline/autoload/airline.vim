@@ -88,6 +88,9 @@ function! airline#switch_matching_theme()
 endfunction
 
 function! airline#update_statusline()
+  if airline#util#getwinvar(winnr(), 'airline_disabled', 0)
+    return
+  endif
   for nr in filter(range(1, winnr('$')), 'v:val != winnr()')
     if airline#util#getwinvar(nr, 'airline_disabled', 0)
       continue
@@ -161,7 +164,7 @@ function! airline#check_mode(winnr)
     call add(l:mode, 'paste')
   endif
 
-  if g:airline_detect_crypt && !empty(&key)
+  if g:airline_detect_crypt && exists("+key") && !empty(&key)
     call add(l:mode, 'crypt')
   endif
 

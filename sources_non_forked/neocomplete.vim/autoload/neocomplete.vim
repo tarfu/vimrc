@@ -51,8 +51,6 @@ let g:neocomplete#disable_auto_complete =
       \ get(g:, 'neocomplete#disable_auto_complete', 0)
 let g:neocomplete#enable_fuzzy_completion =
       \ get(g:, 'neocomplete#enable_fuzzy_completion', 1)
-let g:neocomplete#enable_insert_char_pre =
-      \ get(g:, 'neocomplete#enable_insert_char_pre', 0)
 let g:neocomplete#enable_cursor_hold_i =
       \ get(g:, 'neocomplete#enable_cursor_hold_i', 0)
 let g:neocomplete#cursor_hold_i_time =
@@ -63,8 +61,6 @@ let g:neocomplete#enable_auto_delimiter =
       \ get(g:, 'neocomplete#enable_auto_delimiter', 0)
 let g:neocomplete#lock_buffer_name_pattern =
       \ get(g:, 'neocomplete#lock_buffer_name_pattern', '')
-let g:neocomplete#ctags_command =
-      \ get(g:, 'neocomplete#ctags_command', 'ctags')
 let g:neocomplete#lock_iminsert =
       \ get(g:, 'neocomplete#lock_iminsert', 0)
 let g:neocomplete#enable_multibyte_completion =
@@ -85,8 +81,6 @@ let g:neocomplete#same_filetypes =
       \ get(g:, 'neocomplete#same_filetypes', {})
 let g:neocomplete#delimiter_patterns =
       \ get(g:, 'neocomplete#delimiter_patterns', {})
-let g:neocomplete#ctags_arguments =
-      \ get(g:, 'neocomplete#ctags_arguments', {})
 let g:neocomplete#text_mode_filetypes =
       \ get(g:, 'neocomplete#text_mode_filetypes', {})
 let g:neocomplete#tags_filter_patterns =
@@ -311,6 +305,15 @@ endfunction"}}}
 function! neocomplete#skip_next_complete() "{{{
   let neocomplete = neocomplete#get_current_neocomplete()
   let neocomplete.skip_next_complete = 1
+endfunction"}}}
+function! neocomplete#get_default_matchers() "{{{
+  return map(copy(neocomplete#get_current_neocomplete().default_matchers),
+        \ 'v:val.name')
+endfunction"}}}
+function! neocomplete#set_default_matchers(matchers) "{{{
+  let neocomplete = neocomplete#get_current_neocomplete()
+  let neocomplete.default_matchers = neocomplete#init#_filters(
+        \ neocomplete#util#convert2list(a:matchers))
 endfunction"}}}
 
 function! neocomplete#set_dictionary_helper(variable, keys, value) "{{{

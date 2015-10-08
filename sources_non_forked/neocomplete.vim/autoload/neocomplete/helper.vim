@@ -314,9 +314,9 @@ function! neocomplete#helper#call_hook(sources, hook_name, context) "{{{
       call neocomplete#print_error(v:throwpoint)
       call neocomplete#print_error(v:exception)
       call neocomplete#print_error(
-            \ '[unite.vim] Error occurred in calling hook "' . a:hook_name . '"!')
+            \ 'Error occurred in calling hook "' . a:hook_name . '"!')
       call neocomplete#print_error(
-            \ '[unite.vim] Source name is ' . source.name)
+            \ 'Source name is ' . source.name)
     endtry
   endfor
 endfunction"}}}
@@ -330,10 +330,10 @@ function! neocomplete#helper#call_filters(filters, source, context) "{{{
       call neocomplete#print_error(v:throwpoint)
       call neocomplete#print_error(v:exception)
       call neocomplete#print_error(
-            \ '[unite.vim] Error occurred in calling filter '
+            \ 'Error occurred in calling filter '
             \   . filter.name . '!')
       call neocomplete#print_error(
-            \ '[unite.vim] Source name is ' . a:source.name)
+            \ 'Source name is ' . a:source.name)
     endtry
   endfor
 
@@ -388,13 +388,26 @@ function! neocomplete#helper#complete_configure() "{{{
   let neocomplete.completeopt = &completeopt
 
   if neocomplete#util#is_complete_select()
+        \ && &completeopt !~# 'noinsert\|noselect'
     if g:neocomplete#enable_auto_select
       set completeopt-=noselect
       set completeopt+=noinsert
     else
-      set completeopt+=noinsert,noselect
+      set completeopt-=noinsert
+      set completeopt+=noselect
     endif
   endif
+endfunction"}}}
+
+function! neocomplete#helper#clean(directory) "{{{
+  let directory = neocomplete#get_data_directory() .'/'.a:directory
+  for file in split(glob(directory . '/*'), '\n')
+    let orig = substitute(substitute(fnamemodify(file, ':t'),
+        \             '=-', ':', 'g'), '=+', '/', 'g')
+    if !filereadable(orig)
+      call delete(file)
+    endif
+  endfor
 endfunction"}}}
 
 function! s:save_foldinfo() "{{{
